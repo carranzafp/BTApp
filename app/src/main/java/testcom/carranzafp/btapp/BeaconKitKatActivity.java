@@ -1,4 +1,4 @@
-package com.example.bluetoothgatt;
+package testcom.carranzafp.btapp;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
@@ -189,6 +189,7 @@ public class BeaconKitKatActivity extends Activity implements BluetoothAdapter.L
                 convertView = LayoutInflater.from(getContext())
                         .inflate(R.layout.item_beacon_list, parent, false);
             }
+
 
             TemperatureBeacon beacon = getItem(position);
             //Set color based on temperature

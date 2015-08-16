@@ -1,4 +1,4 @@
-package com.example.bluetoothgatt;
+package testcom.carranzafp.btapp;;
 
 import java.util.ArrayList;
 import java.util.Arrays;

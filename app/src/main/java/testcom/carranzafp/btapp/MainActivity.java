@@ -1,4 +1,4 @@
-package com.example.bluetoothgatt;
+package testcom.carranzafp.btapp;
 
 import android.app.Activity;
 import android.app.ProgressDialog;

@@ -1,4 +1,4 @@
-package com.example.bluetoothgatt;
+package testcom.carranzafp.btapp;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
