@@ -30,6 +30,7 @@ import java.util.UUID;
  * Double Encore, Inc.
  * MainActivity
  */
+
 public class MainActivity extends Activity implements BluetoothAdapter.LeScanCallback {
     private static final String TAG = "BluetoothGattActivity";
 
