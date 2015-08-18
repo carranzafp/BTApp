@@ -170,17 +170,24 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
                 startScan();
                 return true;
             default:
-                //Obtain the discovered device to connect with
-                BluetoothDevice device = mDevices.get(item.getItemId());
-                Log.i(TAG, "Connecting to "+device.getName());
+                if(mDevices.size()>0) {
+                    //Obtain the discovered device to connect with
+                    BluetoothDevice device = mDevices.get(item.getItemId());
+                    Log.i(TAG, "Connecting to " + device.getName());
                 /*
                  * Make a connection with the device using the special LE-specific
                  * connectGatt() method, passing in a callback for GATT events
                  */
-                mConnectedGatt = device.connectGatt(this, false, mGattCallback);
-                //Display progress UI
-                mHandler.sendMessage(Message.obtain(null, MSG_PROGRESS, "Connecting to "+device.getName()+"..."));
-                return super.onOptionsItemSelected(item);
+                    mConnectedGatt = device.connectGatt(this, false, mGattCallback);
+                    //Display progress UI
+                    mHandler.sendMessage(Message.obtain(null, MSG_PROGRESS, "Connecting to " + device.getName() + "..."));
+                    return super.onOptionsItemSelected(item);
+                }
+                else {
+                    //Saving from a crash hopefully
+                    Log.w(TAG, "No devices detected");
+                    return false;
+                }
         }
     }
 
@@ -543,9 +550,19 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
                     updatePressureCals(characteristic);
                     break;
                 case MSG_PROGRESS:
-                    mProgress.setMessage((String) msg.obj);
-                    if (!mProgress.isShowing()) {
-                        mProgress.show();
+                    if(!isFinishing()) { //Used to save an exception
+                        mProgress.setMessage((String) msg.obj);
+                        if (!mProgress.isShowing()) {
+                            //try {
+                                mProgress.show();
+                            //}
+                            //catch (Exception e) {
+                            //    Log.e(TAG,"Catching Exception:",e);
+                            //}
+                        }
+                    }
+                    else {
+                        Log.d(TAG,"Preventing Exception");
                     }
                     break;
                 case MSG_DISMISS:
