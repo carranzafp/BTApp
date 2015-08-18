@@ -8,6 +8,7 @@ import android.bluetooth.BluetoothGatt;
 import android.bluetooth.BluetoothGattCallback;
 import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
+import android.bluetooth.BluetoothGattService;
 import android.bluetooth.BluetoothManager;
 import android.bluetooth.BluetoothProfile;
 import android.content.Intent;
@@ -23,6 +24,7 @@ import android.view.Window;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -35,6 +37,12 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
     private static final String TAG = "BluetoothGattActivity";
 
     private static final String DEVICE_NAME = "SensorTag";
+
+    /* Battery Service */
+    //"00000000-0000-1000-8000-00805f9b34fb" //BASE UUID must be hex in lowercase !!
+    private static final UUID BATTERY_SERVICE = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb");
+    private static final UUID BATTERY_DATA_CHAR = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb");
+    private static final UUID BATTERY_CONFIG_CHAR = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb");
 
     /* Humidity Service */
     private static final UUID HUMIDITY_SERVICE = UUID.fromString("f000aa20-0451-4000-b000-000000000000");
@@ -54,7 +62,7 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
 
     private BluetoothGatt mConnectedGatt;
 
-    private TextView mTemperature, mHumidity, mPressure;
+    private TextView mTemperature, mHumidity, mPressure, mBattery;
 
     private ProgressDialog mProgress;
 
@@ -71,6 +79,7 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
         mTemperature = (TextView) findViewById(R.id.text_temperature);
         mHumidity = (TextView) findViewById(R.id.text_humidity);
         mPressure = (TextView) findViewById(R.id.text_pressure);
+        mBattery = (TextView) findViewById(R.id.text_battery);
 
         /*
          * Bluetooth in Android 4.3 is accessed via the BluetoothManager, rather than
@@ -176,6 +185,7 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
     }
 
     private void clearDisplayValues() {
+        mBattery.setText("---");
         mTemperature.setText("---");
         mHumidity.setText("---");
         mPressure.setText("---");
@@ -216,11 +226,11 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
          * We are looking for SensorTag devices only, so validate the name
          * that each device reports before adding it to our collection
          */
-        if (DEVICE_NAME.equals(device.getName())) {
+//        if (DEVICE_NAME.equals(device.getName())) {
             mDevices.put(device.hashCode(), device);
             //Update the overflow menu
             invalidateOptionsMenu();
-        }
+//        }
     }
 
     /*
@@ -233,9 +243,13 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
         /* State Machine Tracking */
         private int mState = 0;
 
-        private void reset() { mState = 0; }
+        private void reset() { mState = 0;
+            Log.d(TAG, "State machine Reset()");
+        }
 
-        private void advance() { mState++; }
+        private void advance() { mState++;
+            Log.d(TAG, "State machine newstate:"+mState);
+        }
 
         /*
          * Send an enable command to each sensor by writing a configuration
@@ -279,20 +293,25 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
             BluetoothGattCharacteristic characteristic;
             switch (mState) {
                 case 0:
-                    Log.d(TAG, "Reading pressure cal");
-                    characteristic = gatt.getService(PRESSURE_SERVICE)
-                            .getCharacteristic(PRESSURE_CAL_CHAR);
+                    Log.d(TAG, "Reading Battery Level");
+                    characteristic = gatt.getService(BATTERY_SERVICE)
+                            .getCharacteristic(BATTERY_DATA_CHAR);
                     break;
-                case 1:
-                    Log.d(TAG, "Reading pressure");
-                    characteristic = gatt.getService(PRESSURE_SERVICE)
-                            .getCharacteristic(PRESSURE_DATA_CHAR);
-                    break;
-                case 2:
-                    Log.d(TAG, "Reading humidity");
-                    characteristic = gatt.getService(HUMIDITY_SERVICE)
-                            .getCharacteristic(HUMIDITY_DATA_CHAR);
-                    break;
+//                case 0:
+//                    Log.d(TAG, "Reading pressure cal");
+//                    characteristic = gatt.getService(PRESSURE_SERVICE)
+//                            .getCharacteristic(PRESSURE_CAL_CHAR);
+//                    break;
+//                case 1:
+//                    Log.d(TAG, "Reading pressure");
+//                    characteristic = gatt.getService(PRESSURE_SERVICE)
+//                            .getCharacteristic(PRESSURE_DATA_CHAR);
+//                    break;
+//                case 2:
+//                    Log.d(TAG, "Reading humidity");
+//                    characteristic = gatt.getService(HUMIDITY_SERVICE)
+//                            .getCharacteristic(HUMIDITY_DATA_CHAR);
+//                    break;
                 default:
                     mHandler.sendEmptyMessage(MSG_DISMISS);
                     Log.i(TAG, "All Sensors Enabled");
@@ -311,20 +330,26 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
             BluetoothGattCharacteristic characteristic;
             switch (mState) {
                 case 0:
-                    Log.d(TAG, "Set notify pressure cal");
-                    characteristic = gatt.getService(PRESSURE_SERVICE)
-                            .getCharacteristic(PRESSURE_CAL_CHAR);
+                    Log.d(TAG, "Set notify battery level");
+                    characteristic = gatt.getService(BATTERY_SERVICE)
+                            .getCharacteristic(BATTERY_CONFIG_CHAR);
+
                     break;
-                case 1:
-                    Log.d(TAG, "Set notify pressure");
-                    characteristic = gatt.getService(PRESSURE_SERVICE)
-                            .getCharacteristic(PRESSURE_DATA_CHAR);
-                    break;
-                case 2:
-                    Log.d(TAG, "Set notify humidity");
-                    characteristic = gatt.getService(HUMIDITY_SERVICE)
-                            .getCharacteristic(HUMIDITY_DATA_CHAR);
-                    break;
+//                case 0:
+//                    Log.d(TAG, "Set notify pressure cal");
+//                    characteristic = gatt.getService(PRESSURE_SERVICE)
+//                            .getCharacteristic(PRESSURE_CAL_CHAR);
+//                    break;
+//                case 1:
+//                    Log.d(TAG, "Set notify pressure");
+//                    characteristic = gatt.getService(PRESSURE_SERVICE)
+//                            .getCharacteristic(PRESSURE_DATA_CHAR);
+//                    break;
+//                case 2:
+//                    Log.d(TAG, "Set notify humidity");
+//                    characteristic = gatt.getService(HUMIDITY_SERVICE)
+//                            .getCharacteristic(HUMIDITY_DATA_CHAR);
+//                    break;
                 default:
                     mHandler.sendEmptyMessage(MSG_DISMISS);
                     Log.i(TAG, "All Sensors Enabled");
@@ -338,6 +363,8 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
             desc.setValue(BluetoothGattDescriptor.ENABLE_NOTIFICATION_VALUE);
             gatt.writeDescriptor(desc);
         }
+
+
 
         @Override
         public void onConnectionStateChange(BluetoothGatt gatt, int status, int newState) {
@@ -367,17 +394,35 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
         public void onServicesDiscovered(BluetoothGatt gatt, int status) {
             Log.d(TAG, "Services Discovered: "+status);
             mHandler.sendMessage(Message.obtain(null, MSG_PROGRESS, "Enabling Sensors..."));
+
+            //Log the services discovered for debugging
+            List<BluetoothGattService> services=gatt.getServices();
+            for(BluetoothGattService service : services) {
+                Log.d(TAG, " S:"+service.getUuid().toString());
+                for(BluetoothGattCharacteristic chara : service.getCharacteristics()) {
+                    Log.d(TAG, "  C:"+chara.getUuid().toString());
+                    for(BluetoothGattDescriptor desc : chara.getDescriptors()) {
+                        Log.d(TAG, "   D:"+desc.getUuid().toString());
+                    }
+                }
+            }
+
             /*
              * With services discovered, we are going to reset our state machine and start
              * working through the sensors we need to enable
              */
             reset();
-            enableNextSensor(gatt);
+            //On our test all sensors are already enabled so skip this
+            //enableNextSensor(gatt);
+            readNextSensor(gatt);
         }
 
         @Override
         public void onCharacteristicRead(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             //For each read, pass the data up to the UI thread to update the display
+            if (BATTERY_DATA_CHAR.equals(characteristic.getUuid())) {
+                mHandler.sendMessage(Message.obtain(null, MSG_BATTERY, characteristic));
+            }
             if (HUMIDITY_DATA_CHAR.equals(characteristic.getUuid())) {
                 mHandler.sendMessage(Message.obtain(null, MSG_HUMIDITY, characteristic));
             }
@@ -388,14 +433,14 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
                 mHandler.sendMessage(Message.obtain(null, MSG_PRESSURE_CAL, characteristic));
             }
 
-            //After reading the initial value, next we enable notifications
+            //After reading the initial value, next we enable notifications;
             setNotifyNextSensor(gatt);
         }
 
         @Override
         public void onCharacteristicWrite(BluetoothGatt gatt, BluetoothGattCharacteristic characteristic, int status) {
             //After writing the enable flag, next we read the initial value
-            readNextSensor(gatt);
+            Log.d(TAG, "OnCharacteristicWrite() invoked");
         }
 
         @Override
@@ -405,6 +450,9 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
              * value changes will be posted here.  Similar to read, we hand these up to the
              * UI thread to update the display.
              */
+            if (BATTERY_DATA_CHAR.equals(characteristic.getUuid())) {
+                mHandler.sendMessage(Message.obtain(null, MSG_BATTERY, characteristic));
+            }
             if (HUMIDITY_DATA_CHAR.equals(characteristic.getUuid())) {
                 mHandler.sendMessage(Message.obtain(null, MSG_HUMIDITY, characteristic));
             }
@@ -419,8 +467,11 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
         @Override
         public void onDescriptorWrite(BluetoothGatt gatt, BluetoothGattDescriptor descriptor, int status) {
             //Once notifications are enabled, we move to the next sensor and start over with enable
+            //advance();
+            //enableNextSensor(gatt);
+            Log.d(TAG,"onDescriptorWrite() invoked");
             advance();
-            enableNextSensor(gatt);
+            readNextSensor(gatt);
         }
 
         @Override
@@ -450,6 +501,7 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
     private static final int MSG_HUMIDITY = 101;
     private static final int MSG_PRESSURE = 102;
     private static final int MSG_PRESSURE_CAL = 103;
+    private static final int MSG_BATTERY = 104;
     private static final int MSG_PROGRESS = 201;
     private static final int MSG_DISMISS = 202;
     private static final int MSG_CLEAR = 301;
@@ -458,6 +510,14 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
         public void handleMessage(Message msg) {
             BluetoothGattCharacteristic characteristic;
             switch (msg.what) {
+                case MSG_BATTERY:
+                    characteristic = (BluetoothGattCharacteristic) msg.obj;
+                    if (characteristic.getValue() == null) {
+                        Log.w(TAG, "Error obtaining Battery Level value");
+                        return;
+                    }
+                    updateBatteryValues(characteristic);
+                    break;
                 case MSG_HUMIDITY:
                     characteristic = (BluetoothGattCharacteristic) msg.obj;
                     if (characteristic.getValue() == null) {
@@ -499,6 +559,12 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
     };
 
     /* Methods to extract sensor data and update the UI */
+
+    private void updateBatteryValues(BluetoothGattCharacteristic characteristic) {
+        double battery = SensorTagData.extractBatteryLevel(characteristic);
+
+        mBattery.setText(String.format("%.0f%%", battery));
+    }
 
     private void updateHumidityValues(BluetoothGattCharacteristic characteristic) {
         double humidity = SensorTagData.extractHumidity(characteristic);
