@@ -24,6 +24,14 @@ public class SensorTagData {
         return ((-6f) + 125f * (a / 65535f));
     }
 
+    public static double extractBatteryLevel(BluetoothGattCharacteristic c) {
+        //int a = shortUnsignedAtOffset(c, 2);
+
+        return c.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT8,0);
+        //return (a);
+        //return 0;
+    }
+
     public static int[] extractCalibrationCoefficients(BluetoothGattCharacteristic c) {
         int[] coefficients = new int[8];
 
