@@ -27,6 +27,7 @@ import android.widget.Button;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -104,8 +105,21 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
                 characteristic=mConnectedGatt.getService(COUNTER_SERVICE).getCharacteristic(DUMMYWRITE_DATA_CHAR);
                 characteristic.setValue(new byte[] {0x02,0x01});    //Send dummy data
                 mConnectedGatt.writeCharacteristic(characteristic);
+
+/*                //Code to unpair bonded devices
+                for(BluetoothDevice bonded : mBluetoothAdapter.getBondedDevices()) {
+                    Log.d(TAG, "Removing Device Found: " + bonded.getName());
+                    try {
+                        Method m = bonded.getClass().getMethod("removeBond", (Class[]) null);
+                        m.invoke(bonded, (Object[]) null);
+                    } catch (Exception e) { Log.e(TAG, e.getMessage()); }
+                }*/
+
+
             }
         });
+
+
 
 
 
@@ -117,6 +131,15 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
         mBluetoothAdapter = manager.getAdapter();
 
         mDevices = new SparseArray<BluetoothDevice>();
+
+
+        //Now add the bonded devices
+        for(BluetoothDevice bonded : mBluetoothAdapter.getBondedDevices()) {
+            Log.d(TAG,"Bonded Device Found: " + bonded.getName());
+            mDevices.put(bonded.hashCode(), bonded);
+
+        }
+
 
         /*
          * A progress dialog will be needed while the connection process is
@@ -179,13 +202,25 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
+        int titems;
         // Add the "scan" option to the menu
         getMenuInflater().inflate(R.menu.main, menu);
+
         //Add any device elements we've discovered to the overflow menu
+        titems=0;
         for (int i=0; i < mDevices.size(); i++) {
             BluetoothDevice device = mDevices.valueAt(i);
             menu.add(0, mDevices.keyAt(i), 0, device.getName());
+            titems++;
         }
+
+        if(titems==0) {
+            Toast.makeText(this,"Press Scan to detect devices",Toast.LENGTH_SHORT).show();
+        }
+        else {
+            Toast.makeText(this,"Select Device from the List to connect",Toast.LENGTH_SHORT).show();
+        }
+
 
         return true;
     }
