@@ -10,35 +10,11 @@
         android:padding="@dimen/activity_horizontal_margin"
         android:gravity="center_horizontal"
         android:textSize="42sp"
-        android:text="Android Weather Station"
+        android:text="Arcade Machine Collect Tool"
         />
     <TableRow>
         <TextView
-            android:id="@+id/text_temperature"
-            android:layout_column="0"
-            android:textSize="@dimen/measurement_text_size"
-            android:gravity="center_horizontal"/>
-        <TextView
-            android:layout_column="2"
-            android:id="@+id/text_pressure"
-            android:textSize="@dimen/measurement_text_size"
-            android:gravity="center_horizontal"/>
-    </TableRow>
-    <TableRow>
-        <TextView
-            android:layout_column="0"
-            android:textSize="@dimen/label_text_size"
-            android:gravity="center_horizontal"
-            android:text="Ambient Temperature"/>
-        <TextView
-            android:layout_column="2"
-            android:textSize="@dimen/label_text_size"
-            android:gravity="center_horizontal"
-            android:text="Barometric Pressure"/>
-    </TableRow>
-    <TableRow>
-        <TextView
-            android:id="@+id/text_humidity"
+            android:id="@+id/text_counter"
             android:layout_column="0"
             android:textSize="@dimen/measurement_text_size"
             android:gravity="center_horizontal"/>
@@ -53,7 +29,7 @@
             android:layout_column="0"
             android:textSize="@dimen/label_text_size"
             android:gravity="center_horizontal"
-            android:text="Humidity Value"
+            android:text="Counter"
             />
         <TextView
             android:layout_column="2"
@@ -62,5 +38,33 @@
             android:text="Battery Level"
             />
     </TableRow>
+    <TableRow>
+        <TextView
+            android:id="@+id/text_temperature"
+            android:layout_column="0"
+            android:textSize="@dimen/measurement_text_size"
+            android:gravity="center_horizontal"/>
+        <Button
+            android:id="@+id/button_sendcmd"
+            android:layout_column="2"
+            android:textSize="@dimen/label_text_size"
+            android:gravity="center_horizontal"
+            android:text="Send Data"
+            android:enabled="false"/>
+
+    </TableRow>
+    <TableRow>
+        <TextView
+            android:layout_column="0"
+            android:textSize="@dimen/label_text_size"
+            android:gravity="center_horizontal"
+            android:text="Ambient Temperature"/>
+        <TextView
+            android:layout_column="2"
+            android:textSize="@dimen/label_text_size"
+            android:gravity="center_horizontal"
+            android:text="Send Data"/>
+    </TableRow>
+
 
 </TableLayout>

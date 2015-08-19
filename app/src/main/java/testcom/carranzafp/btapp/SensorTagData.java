@@ -32,6 +32,18 @@ public class SensorTagData {
         //return 0;
     }
 
+    public static int extractCounter(BluetoothGattCharacteristic c) {
+        //warning this will crash with nullpointer if the data received is less than 4 bytes
+        int a;
+        if(c.getValue().length<4) {
+            a=0;
+        }
+        else {
+            a = c.getIntValue(BluetoothGattCharacteristic.FORMAT_UINT32, 0);
+        }
+        return (a);
+    }
+
     public static int[] extractCalibrationCoefficients(BluetoothGattCharacteristic c) {
         int[] coefficients = new int[8];
 

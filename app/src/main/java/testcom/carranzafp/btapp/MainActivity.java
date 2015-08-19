@@ -20,10 +20,14 @@ import android.util.Log;
 import android.util.SparseArray;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.Window;
+import android.widget.Button;
+
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,7 +46,13 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
     //"00000000-0000-1000-8000-00805f9b34fb" //BASE UUID must be hex in lowercase !!
     private static final UUID BATTERY_SERVICE = UUID.fromString("0000180f-0000-1000-8000-00805f9b34fb");
     private static final UUID BATTERY_DATA_CHAR = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb");
-    private static final UUID BATTERY_CONFIG_CHAR = UUID.fromString("00002a19-0000-1000-8000-00805f9b34fb");
+
+
+    /* Counter (private service */
+    private static final UUID COUNTER_SERVICE = UUID.fromString("11223344-5566-7788-9900-aabbccddeeff");
+    private static final UUID COUNTER_DATA_CHAR = UUID.fromString("01020304-0506-0708-0900-0a0b0c0d0e0f");  //This service must be readable, notifiable and must have 4 bytes length
+    /* Dummy Write Characteristic (private service)*/
+    private static final UUID DUMMYWRITE_DATA_CHAR = UUID.fromString("11121314-1516-1718-1910-1a1b1c1d1e1f");  //This service must be writeable, notifiable and must have 2 bytes length
 
     /* Humidity Service */
     private static final UUID HUMIDITY_SERVICE = UUID.fromString("f000aa20-0451-4000-b000-000000000000");
@@ -62,7 +72,10 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
 
     private BluetoothGatt mConnectedGatt;
 
-    private TextView mTemperature, mHumidity, mPressure, mBattery;
+    private TextView mTemperature, mCounter, mBattery;
+    //, mPressure;
+    private Button mSendCmd;
+    //private EditText mCommand;
 
     private ProgressDialog mProgress;
 
@@ -77,9 +90,24 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
          * We are going to display the results in some text fields
          */
         mTemperature = (TextView) findViewById(R.id.text_temperature);
-        mHumidity = (TextView) findViewById(R.id.text_humidity);
-        mPressure = (TextView) findViewById(R.id.text_pressure);
+        mCounter = (TextView) findViewById(R.id.text_counter);
+        //mCommand = (EditText) findViewById(R.id.text_command);
+        mSendCmd = (Button)findViewById(R.id.button_sendcmd);
         mBattery = (TextView) findViewById(R.id.text_battery);
+        //mPressure=(TextView)findViewById(R.id.text_pressure);
+
+        mSendCmd.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                //invoke write data here
+                BluetoothGattCharacteristic characteristic;
+                characteristic=mConnectedGatt.getService(COUNTER_SERVICE).getCharacteristic(DUMMYWRITE_DATA_CHAR);
+                characteristic.setValue(new byte[] {0x02,0x01});    //Send dummy data
+                mConnectedGatt.writeCharacteristic(characteristic);
+            }
+        });
+
+
 
         /*
          * Bluetooth in Android 4.3 is accessed via the BluetoothManager, rather than
@@ -194,8 +222,8 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
     private void clearDisplayValues() {
         mBattery.setText("---");
         mTemperature.setText("---");
-        mHumidity.setText("---");
-        mPressure.setText("---");
+        mCounter.setText("-----");
+        //mPressure.setText("---");
     }
 
 
@@ -304,6 +332,11 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
                     characteristic = gatt.getService(BATTERY_SERVICE)
                             .getCharacteristic(BATTERY_DATA_CHAR);
                     break;
+                case 1:
+                    Log.d(TAG, "Reading Counter");
+                    characteristic = gatt.getService(COUNTER_SERVICE)
+                            .getCharacteristic(COUNTER_DATA_CHAR);
+                    break;
 //                case 0:
 //                    Log.d(TAG, "Reading pressure cal");
 //                    characteristic = gatt.getService(PRESSURE_SERVICE)
@@ -339,7 +372,13 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
                 case 0:
                     Log.d(TAG, "Set notify battery level");
                     characteristic = gatt.getService(BATTERY_SERVICE)
-                            .getCharacteristic(BATTERY_CONFIG_CHAR);
+                            .getCharacteristic(BATTERY_DATA_CHAR);
+
+                    break;
+                case 1:
+                    Log.d(TAG, "Set notify counter");
+                    characteristic = gatt.getService(COUNTER_SERVICE)
+                            .getCharacteristic(COUNTER_DATA_CHAR);
 
                     break;
 //                case 0:
@@ -383,17 +422,20 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
                  */
                 gatt.discoverServices();
                 mHandler.sendMessage(Message.obtain(null, MSG_PROGRESS, "Discovering Services..."));
+                mSendCmd.setEnabled(true);
             } else if (status == BluetoothGatt.GATT_SUCCESS && newState == BluetoothProfile.STATE_DISCONNECTED) {
                 /*
                  * If at any point we disconnect, send a message to clear the weather values
                  * out of the UI
                  */
                 mHandler.sendEmptyMessage(MSG_CLEAR);
+                mSendCmd.setEnabled(false);
             } else if (status != BluetoothGatt.GATT_SUCCESS) {
                 /*
                  * If there is a failure at any stage, simply disconnect
                  */
                 gatt.disconnect();
+                mSendCmd.setEnabled(false);
             }
         }
 
@@ -430,8 +472,8 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
             if (BATTERY_DATA_CHAR.equals(characteristic.getUuid())) {
                 mHandler.sendMessage(Message.obtain(null, MSG_BATTERY, characteristic));
             }
-            if (HUMIDITY_DATA_CHAR.equals(characteristic.getUuid())) {
-                mHandler.sendMessage(Message.obtain(null, MSG_HUMIDITY, characteristic));
+            if (COUNTER_DATA_CHAR.equals(characteristic.getUuid())) {
+                mHandler.sendMessage(Message.obtain(null, MSG_COUNTER, characteristic));
             }
             if (PRESSURE_DATA_CHAR.equals(characteristic.getUuid())) {
                 mHandler.sendMessage(Message.obtain(null, MSG_PRESSURE, characteristic));
@@ -460,8 +502,8 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
             if (BATTERY_DATA_CHAR.equals(characteristic.getUuid())) {
                 mHandler.sendMessage(Message.obtain(null, MSG_BATTERY, characteristic));
             }
-            if (HUMIDITY_DATA_CHAR.equals(characteristic.getUuid())) {
-                mHandler.sendMessage(Message.obtain(null, MSG_HUMIDITY, characteristic));
+            if (COUNTER_DATA_CHAR.equals(characteristic.getUuid())) {
+                mHandler.sendMessage(Message.obtain(null, MSG_COUNTER, characteristic));
             }
             if (PRESSURE_DATA_CHAR.equals(characteristic.getUuid())) {
                 mHandler.sendMessage(Message.obtain(null, MSG_PRESSURE, characteristic));
@@ -505,7 +547,7 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
     /*
      * We have a Handler to process event results on the main thread
      */
-    private static final int MSG_HUMIDITY = 101;
+    private static final int MSG_COUNTER = 101;
     private static final int MSG_PRESSURE = 102;
     private static final int MSG_PRESSURE_CAL = 103;
     private static final int MSG_BATTERY = 104;
@@ -525,22 +567,22 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
                     }
                     updateBatteryValues(characteristic);
                     break;
-                case MSG_HUMIDITY:
+                case MSG_COUNTER:
                     characteristic = (BluetoothGattCharacteristic) msg.obj;
                     if (characteristic.getValue() == null) {
-                        Log.w(TAG, "Error obtaining humidity value");
+                        Log.w(TAG, "Error obtaining counter value");
                         return;
                     }
-                    updateHumidityValues(characteristic);
+                    updateCounterValues(characteristic);
                     break;
-                case MSG_PRESSURE:
-                    characteristic = (BluetoothGattCharacteristic) msg.obj;
-                    if (characteristic.getValue() == null) {
-                        Log.w(TAG, "Error obtaining pressure value");
-                        return;
-                    }
-                    updatePressureValue(characteristic);
-                    break;
+//                case MSG_PRESSURE:
+//                    characteristic = (BluetoothGattCharacteristic) msg.obj;
+//                    if (characteristic.getValue() == null) {
+//                        Log.w(TAG, "Error obtaining pressure value");
+//                        return;
+//                    }
+//                    updatePressureValue(characteristic);
+//                    break;
                 case MSG_PRESSURE_CAL:
                     characteristic = (BluetoothGattCharacteristic) msg.obj;
                     if (characteristic.getValue() == null) {
@@ -583,10 +625,12 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
         mBattery.setText(String.format("%.0f%%", battery));
     }
 
-    private void updateHumidityValues(BluetoothGattCharacteristic characteristic) {
-        double humidity = SensorTagData.extractHumidity(characteristic);
+    private void updateCounterValues(BluetoothGattCharacteristic characteristic) {
+        int counter = SensorTagData.extractCounter(characteristic);
+        //Log raw data of the characteristic
+        //Log.d(TAG,"Counter:"+ Arrays.toString(characteristic.getValue()));
 
-        mHumidity.setText(String.format("%.0f%%", humidity));
+        mCounter.setText(String.format("%06d", counter));
     }
 
     private int[] mPressureCals;
@@ -594,12 +638,12 @@ public class MainActivity extends Activity implements BluetoothAdapter.LeScanCal
         mPressureCals = SensorTagData.extractCalibrationCoefficients(characteristic);
     }
 
-    private void updatePressureValue(BluetoothGattCharacteristic characteristic) {
-        if (mPressureCals == null) return;
-        double pressure = SensorTagData.extractBarometer(characteristic, mPressureCals);
-        double temp = SensorTagData.extractBarTemperature(characteristic, mPressureCals);
-
-        mTemperature.setText(String.format("%.1f\u00B0C", temp));
-        mPressure.setText(String.format("%.2f", pressure));
-    }
+//    private void updatePressureValue(BluetoothGattCharacteristic characteristic) {
+//        if (mPressureCals == null) return;
+//        double pressure = SensorTagData.extractBarometer(characteristic, mPressureCals);
+//        double temp = SensorTagData.extractBarTemperature(characteristic, mPressureCals);
+//
+//        mTemperature.setText(String.format("%.1f\u00B0C", temp));
+//        mPressure.setText(String.format("%.2f", pressure));
+//    }
 }
