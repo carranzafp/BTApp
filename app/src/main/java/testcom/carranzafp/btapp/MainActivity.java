@@ -38,6 +38,8 @@ import java.util.UUID;
  * MainActivity
  */
 
+//MRC: download icons caribean blue from here //http://www.iconsdb.com/caribbean-blue-icons/coins-icon.html
+
 public class MainActivity extends Activity implements BluetoothAdapter.LeScanCallback {
     private static final String TAG = "BluetoothGattActivity";
 
